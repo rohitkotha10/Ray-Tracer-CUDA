@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>
-
 #include <iostream>
+
 #include "vec3.h"
 #include "utils.h"
 
@@ -23,9 +23,9 @@ namespace Tracer {
             vec3 cur = col;
 
             float scale = 1.0 / (float)samples;
-            cur.x = sqrt(scale * cur.x);
-            cur.y = sqrt(scale * cur.y);
-            cur.z = sqrt(scale * cur.z);
+            //cur.x = sqrt(scale * cur.x);
+            //cur.y = sqrt(scale * cur.y);
+            //cur.z = sqrt(scale * cur.z);
 
             data[x][y] = cur;
         }
@@ -43,9 +43,9 @@ namespace Tracer {
                     float r = data[x][y].x;
                     float g = data[x][y].y;
                     float b = data[x][y].z;
-                    *(start + cur) = (uint8_t)(255.99f * clamp(r, 0.0f, 0.999f));
-                    *(start + 1 + cur) = (uint8_t)(255.99f * clamp(g, 0.0f, 0.999f));
-                    *(start + 2 + cur) = (uint8_t)(255.99f * clamp(b, 0.0f, 0.999f));
+                    *(start + cur) = (uint8_t)(255.99f * r);
+                    *(start + 1 + cur) = (uint8_t)(255.99f * g);
+                    *(start + 2 + cur) = (uint8_t)(255.99f * b);
                 }
             }
             std::string name = filename + ".jpg";

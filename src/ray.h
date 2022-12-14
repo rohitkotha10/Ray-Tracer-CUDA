@@ -3,7 +3,6 @@
 #include "device_launch_parameters.h"
 
 #include "vec3.h"
-#include "color.h"
 
 namespace Tracer {
     class Ray {

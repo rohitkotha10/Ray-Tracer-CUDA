@@ -7,16 +7,7 @@
 namespace Tracer {
     class vec3 {
     public:
-        __host__ __device__ vec3() {
-            x = 0.0f;
-            y = 0.0f;
-            z = 0.0f;
-        }
-        __host__ __device__ vec3(float val) {
-            x = val;
-            y = val;
-            z = val;
-        }
+        __host__ __device__ vec3() {}
         __host__ __device__ vec3(float x, float y, float z) {
             this->x = x;
             this->y = y;
@@ -31,9 +22,9 @@ namespace Tracer {
         __host__ __device__ inline const vec3 &operator+() const { return *this; }
         __host__ __device__ vec3 operator-() const { return vec3(-x, -y, -z); }
 
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
+        float x;
+        float y;
+        float z;
     };
 
     __host__ __device__ vec3 operator+(const vec3 &v1, const vec3 &v2) {
@@ -56,7 +47,7 @@ namespace Tracer {
         return vec3(t * v.x, t * v.y, t * v.z);
     }
     __host__ __device__ float dot(const vec3 &v1, const vec3 &v2) {
-        return v1.x * v2.x, v1.y * v2.y, v1.z * v2.z;
+        return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
     }
 
     __host__ __device__ inline vec3 cross(const vec3 &v1, const vec3 &v2) {
