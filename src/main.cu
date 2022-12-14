@@ -3,41 +3,70 @@
 #include <iostream>
 #include <math.h>
 
-__global__ void add(int n, float *x, float *y) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x * gridDim.x;
-    for (int i = index; i < n; i += stride) y[i] = x[i] + y[i];
+// function to add the elements of two arrays
+#define STB_IMAGE_IMPLEMENTATION
+#include "../vendor/stb_image/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../vendor/stb_image/stb_image_write.h"
+
+using namespace std;
+
+#define checkCudaErrors(val) check_cuda((val), #val, __FILE__, __LINE__)
+void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
+    if (result) {
+        std::cerr << "CUDA error = " << static_cast<unsigned int>(result) << " at " << file << ":" << line << " '"
+                  << func << "' \n";
+        // Make sure we call CUDA Device Reset before exiting
+        cudaDeviceReset();
+        exit(99);
+    }
 }
 
-int main(void) {
-    int N = 1 << 20;  // 1M elements
+__global__ void render(float *fb, int max_x, int max_y) {
+    int i = threadIdx.x + blockIdx.x * blockDim.x;
+    int j = threadIdx.y + blockIdx.y * blockDim.y;
+    if ((i >= max_x) || (j >= max_y)) return;
+    int pixel_index = j * max_x * 3 + i * 3;
+    fb[pixel_index + 0] = float(i) / max_x;
+    fb[pixel_index + 1] = float(j) / max_y;
+    fb[pixel_index + 2] = 0.2;
+}
 
-    float *x;
-    float *y;
+int main() {
+    int width = 256;
+    int height = 256;
 
-    cudaMallocManaged(&x, N * sizeof(float));
-    cudaMallocManaged(&y, N * sizeof(float));
+    int num_pixels = width * height;
+    size_t fb_size = 3 * num_pixels * sizeof(float);
 
-    // initialize x and y arrays on the host
-    for (int i = 0; i < N; i++) {
-        x[i] = 1.0f;
-        y[i] = 8.0f;
-    }
+    float *fb;
+    checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
 
-    // Run kernel on 1M elements on the CPU
-    int blockSize = 256;
-    int numBlocks = (N + blockSize - 1) / blockSize;
-    add<<<numBlocks, blockSize>>>(N, x, y);
+    int tx = 8;
+    int ty = 8;
+    dim3 blocks(width / tx + 1, height / ty + 1);
+    dim3 threads(tx, ty);
+    render<<<blocks, threads>>>(fb, width, height);
 
     cudaDeviceSynchronize();
-    // Check for errors (all values should be 3.0f)
-    float maxError = 0.0f;
-    for (int i = 0; i < N; i++) maxError = fmax(maxError, fabs(y[i] - 3.0f));
-    std::cout << "Max error: " << maxError << std::endl;
 
-    // Free memory
-    cudaFree(x);
-    cudaFree(y);
+    int img_size = height * width * 3;
 
-    return 0;
+    unsigned char *img = new unsigned char[img_size];
+    unsigned char *start = img;
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            int cur = ((height - y - 1) * width * 3) + x * 3;
+
+            size_t pixel_index = x * 3 * width + y * 3;
+            float r = fb[pixel_index + 0];
+            float g = fb[pixel_index + 1];
+            float b = fb[pixel_index + 2];
+            *(start + cur) = (uint8_t)(255.99 * r);
+            *(start + 1 + cur) = (uint8_t)(255.99 * g);
+            *(start + 2 + cur) = (uint8_t)(255.99 * b);
+        }
+    }
+    stbi_write_jpg("gradient.jpg", width, height, 3, img, 100);
 }
