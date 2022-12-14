@@ -22,13 +22,13 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
     }
 }
 
-__global__ void render(float *fb, int max_x, int max_y) {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    int j = threadIdx.y + blockIdx.y * blockDim.y;
-    if ((i >= max_x) || (j >= max_y)) return;
-    int pixel_index = j * max_x * 3 + i * 3;
-    fb[pixel_index + 0] = float(i) / max_x;
-    fb[pixel_index + 1] = float(j) / max_y;
+__global__ void render(float *fb, int width, int height) {
+    int x = threadIdx.x + blockIdx.x * blockDim.x;
+    int y = threadIdx.y + blockIdx.y * blockDim.y;
+    if ((x >= width) || (y >= height)) return;
+    int pixel_index = (y * width  + x)* 3;
+    fb[pixel_index + 0] = float(x) / width;
+    fb[pixel_index + 1] = float(y) / height;
     fb[pixel_index + 2] = 0.2;
 }
 
@@ -48,7 +48,8 @@ int main() {
     dim3 threads(tx, ty);
     render<<<blocks, threads>>>(fb, width, height);
 
-    cudaDeviceSynchronize();
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaDeviceSynchronize());
 
     int img_size = height * width * 3;
 
@@ -57,9 +58,9 @@ int main() {
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            int cur = ((height - y - 1) * width * 3) + x * 3;
+            int cur = ((height - y - 1) * width + x) * 3;
 
-            size_t pixel_index = x * 3 * width + y * 3;
+            size_t pixel_index = (y * width + x) * 3;
             float r = fb[pixel_index + 0];
             float g = fb[pixel_index + 1];
             float b = fb[pixel_index + 2];
@@ -69,4 +70,6 @@ int main() {
         }
     }
     stbi_write_jpg("gradient.jpg", width, height, 3, img, 100);
+
+    checkCudaErrors(cudaFree(fb));
 }
