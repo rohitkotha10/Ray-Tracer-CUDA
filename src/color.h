@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "vec3.h"
-#include "utils.h"
 
 #include "../vendor/stb_image/stb_image.h"
 #include "../vendor/stb_image/stb_image_write.h"
@@ -19,16 +18,7 @@ namespace Tracer {
             for (int i = 0; i < width; i++) { data[i].resize(height); }
         }
 
-        void writePixel(int x, int y, const vec3 &col, int samples) {
-            vec3 cur = col;
-
-            float scale = 1.0 / (float)samples;
-            //cur.x = sqrt(scale * cur.x);
-            //cur.y = sqrt(scale * cur.y);
-            //cur.z = sqrt(scale * cur.z);
-
-            data[x][y] = cur;
-        }
+        void writePixel(int x, int y, const vec3 &col) { data[x][y] = col; }
 
         void saveWindow(std::string filename) {
             int imgSize = height * width * 3;

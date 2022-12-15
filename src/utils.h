@@ -3,16 +3,9 @@
 
 #include <chrono>
 #include <string>
-#include <random>
 #include <iostream>
 
 namespace Tracer {
-    const float pi = 3.14159265;
-
-    void printVec(vec3 cur) {
-        std::cout << cur.x << ' ' << cur.y << ' ' << cur.z << std::endl;
-    }
-
     class Timer {
     public:
         void start(std::string name) {

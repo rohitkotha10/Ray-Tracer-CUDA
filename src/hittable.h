@@ -33,26 +33,21 @@ namespace Tracer {
         __device__ virtual bool hit(const Ray& ray, float tMin, float tMax, HitRecord& rec) const {
             vec3 oc = ray.getOrigin() - center;
             float a = dot(ray.getDirection(), ray.getDirection());
-            float b = dot(oc, ray.getDirection());
+            float bHalf = dot(oc, ray.getDirection());
             float c = dot(oc, oc) - radius * radius;
-            float discriminant = b * b - a * c;
-            if (discriminant > 0) {
-                float temp = (-b - sqrt(discriminant)) / a;
-                if (temp < tMax && temp > tMin) {
-                    rec.t = temp;
-                    rec.point = ray.at(rec.t);
-                    rec.normal = (rec.point - center) / radius;
-                    return true;
-                }
-                temp = (-b + sqrt(discriminant)) / a;
-                if (temp < tMax && temp > tMin) {
-                    rec.t = temp;
-                    rec.point = ray.at(rec.t);
-                    rec.normal = (rec.point - center) / radius;
-                    return true;
-                }
+            float discriminant = bHalf * bHalf - a * c;
+            if (discriminant < 0) { return false; }
+            float root = (-bHalf - sqrt(discriminant)) / a;
+            if (root < tMin || tMax < root) {
+                root = (-bHalf + sqrt(discriminant)) / a;
+                if (root < tMin || tMax < root) return false;
             }
-            return false;
+            rec.t = root;
+            rec.point = ray.at(rec.t);
+            vec3 outwardNormal = (rec.point - center) / radius;
+            rec.setFaceNormal(ray, outwardNormal);
+
+            return true;
         }
         vec3 center;
         float radius;
